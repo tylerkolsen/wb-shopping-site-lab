@@ -31,10 +31,21 @@ app.get('/all-animals', (req, res) => {
 });
 
 app.get('/animal-details/:animalId', (req, res) => {
-  res.render('animal-details.html.njk', { animal: stuffedAnimalData.elephant });
+  let currentAnimal = req.params.animalId
+  res.render('animal-details.html.njk', { animal: getAnimalDetails(currentAnimal) });
 });
 
 app.get('/add-to-cart/:animalId', (req, res) => {
+  const animalType = req.params.animalId
+  if (!(req.session.cart)) {
+    req.session.cart = {}
+  }
+  if (!(req.session.cart[animalType])) {
+    req.session.cart[animalType] = 1
+  } else {
+    req.session.cart[animalType] ++
+  }
+  res.redirect('/cart')
   // TODO: Finish add to cart functionality
   // The logic here should be something like:
   // - check if a "cart" exists in the session, and create one (an empty
@@ -45,6 +56,25 @@ app.get('/add-to-cart/:animalId', (req, res) => {
 });
 
 app.get('/cart', (req, res) => {
+  let userCart = req.session.cart
+  let animArray = []
+  let total = 0
+  for (const aniObj in userCart) {
+    animArray.push(getAnimalDetails(aniObj))
+  }
+  for (const anim of animArray) {
+    anim.quantity = userCart[anim.animal_id]
+    anim.subtotal = anim.quantity * anim.price
+    total += anim.subtotal
+  }
+  console.log(animArray)
+  console.log(total)
+
+  res.render('cart.html.njk', {
+    cartList : animArray,
+    total : total
+  })
+  
   // TODO: Display the contents of the shopping cart.
 
   // The logic here will be something like:
@@ -62,8 +92,6 @@ app.get('/cart', (req, res) => {
 
   // Make sure your function can also handle the case where no cart has
   // been added to the session
-
-  res.render('cart.html.njk');
 });
 
 app.get('/checkout', (req, res) => {
@@ -73,8 +101,9 @@ app.get('/checkout', (req, res) => {
 });
 
 app.get('/login', (req, res) => {
+  res.render('login.html.njk')
   // TODO: Implement this
-  res.send('Login has not been implemented yet!');
+  // res.send('Login has not been implemented yet!');
 });
 
 app.post('/process-login', (req, res) => {
